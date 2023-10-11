@@ -16,7 +16,7 @@ Les règles de participation étaient les suivantes :
 
 
 ### Organisation de ce dépôt :
-Chaque challenge est présenté par répertoire distinct, dans lequel on trouvera le code que j'ai réalisé, code refactorisé sous les conseils des deux animateurs du challenge. Chaque répertoire contient un fichier **mon_code.py** ainsi qu'un fichier **challenge.md**. Éventuellement le fichier **solution.py** (plus ou moins commenté) d'un des animateurs.
+Chaque challenge est présenté par répertoire distinct, dans lequel on trouvera le code que j'ai réalisé, code refactorisé sous les conseils des deux animateurs du challenge. Chaque répertoire contient un fichier `mon_code_(num).py` ainsi qu'un fichier `challenge_(num).md`. Éventuellement le fichier `solution_(num).py` (plus ou moins commenté) d'un des animateurs.
 
 
 Je remercie grandement **@buckdanny** et **@OsKaR31415** pour le temps consacré, pour leur patience et la justesse de leurs conseils qui m'ont permis d'avancer par de véritables bonds dans mon apprentissage du langage *Python*.
