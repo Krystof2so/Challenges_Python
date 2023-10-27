@@ -3,7 +3,7 @@
 A compter de l'été 2023, sur le *Discord* **Doctring** (https://discord.gg/docstring-396825382009044994) des challenges de code à réaliser avec le langage *Python* ont été proposés, chaque semaine, à la communauté du *Discord*. Ici, je viens présenter les codes que j'ai réalisé, sous la houlette bienveillante des deux membres co-animateurs de ces challenges: **@bucdany** et **@OsKaR31415**.
 
 ### Les consignes générales de ces challenges :
-La liste des énoncés se trouvent sur le post suivant : https://discord.com/channels/396825382009044994/1160339200063844356
+La liste des challenges se trouvent sur le post suivant : https://discord.com/channels/396825382009044994/1142615384235716638
 
 
 Les règles de participation étaient les suivantes :
@@ -14,7 +14,7 @@ Les règles de participation étaient les suivantes :
 * Pas de *scraping* de site ou *api* pour récupérer des données.
 * Le tout, à réaliser dans la bonne humeur, la joie et l'enthousiasme.
 
-
+Le fil de discussion des challenges : https://discord.com/channels/396825382009044994/1143809447651721276
 ### Organisation de ce dépôt :
 Chaque challenge est présenté par répertoire distinct, dans lequel on trouvera le code que j'ai réalisé, code refactorisé sous les conseils des deux animateurs du challenge. Chaque répertoire contient un fichier `mon_code_(num).py` ainsi qu'un fichier `challenge_(num).md`. Éventuellement le fichier `solution_(num).py` (plus ou moins commenté) d'un des animateurs.
 
