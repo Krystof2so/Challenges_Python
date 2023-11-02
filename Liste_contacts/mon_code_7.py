@@ -1,91 +1,55 @@
-import sqlite3
-from re import findall
-
-TEXT = """
-Récemment, j'ai eu l'opportunité de rencontrer des entrepreneurs exceptionnels lors d'une conférence. Par exemple, j'ai 
-été inspiré par l'histoire de M. Thomas Bernard, qui a démarré sa propre entreprise dans la Silicon Valley. Vous pouvez 
-le contacter à l'adresse email thomas.b@alphamail.com ou au numéro suivant +33 1 12 34 56 78. Une autre personne 
-fascinante était Mme Claire Martin, la fondatrice d'une startup technologique innovante. Elle est joignable à 
-cmartin@betaInbox.org, son numéro de téléphone est le 09 01 23 45 67. Ensuite, il y avait monsieur Lucas Petit, un 
-innovateur dans le domaine de la construction durable, contactable à lp@experimentalpost.net, son téléphone est le 
-0890 12 34 56.
-
-En parcourant mon ancien annuaire, je suis tombé sur quelques contacts intéressants. Par exemple, j'ai redécouvert le 
-contact de Mlle Sophie Martin. Son numéro de téléphone est 07 89 01 23 45, et elle est facilement joignable à l'adresse 
-sophie@prototypemail.com. Un autre contact noté était celui du Dr Lucas Dupont. Je me souviens avoir eu plusieurs 
-discussions avec lui. Son numéro est 06 78 90 12 34 et son mail est drdupont@randomInbox.org. C'est fascinant de voir 
-comment certains contacts peuvent rapidement nous rappeler des souvenirs passés.
-
-Lors de notre dernière réunion, Madame Jennifer Laroche, joignable au 05.67.890.123 ou par e-mail à 
-laroche@trialmail.net, a exprimé sa satisfaction concernant les avancées du projet. 
-Elle a insisté sur la pertinence du feedback fourni par M. Sébastien Girard, qui peut être contacté au 0456789012 ou 
-par email à sébastieng@demomail.org. De plus, notre consultante externe, mademoiselle Chloé Lefebvre, dont le numéro 
-est le 03.45.67.89.01 et l'e-mail est lefebvre_chloé@testInbox.net, a fourni un rapport détaillé qui a été bien reçu 
-par l'équipe.
-"""
-
-
 class ExtractContacts:
-    mr_and_mrs = ("M.", "Mme", "monsieur", "Mlle", "Dr", "Madame", "mademoiselle")
+    MR_AND_MRS = ("M.", "Mme", "monsieur", "Mlle", "Dr", "Madame", "mademoiselle")
+    DB_KEYS = ("Nom & Prénom", "Mail", "Numéro")
+    CODE_ZERO = "0"  # usage numéro en national
 
-    def __init__(self, text: str):
-        self.text = text
-        self.text_split = text.split()
-        list_names, list_mails = self._extract_names_and_mails()
-        self.all_contacts = list(zip(list_names, list_mails, self._extract_phone()))
-        self.longest_name = self._longest(0)
-        self.longest_mail = self._longest(1)
-        self.longest_number = self._longest(2)
+    def __init__(self, file):
+        # Création de la base de données sous forme d'un dictionnaire :
+        self._all_contacts = ExtractContacts._extract_all_datas(ExtractContacts._extract_txt(file))
 
-    def __str__(self):
-        header = (f"{self._display_plain_line()}\n| {'Nom & Prénom'.center(self.longest_name)} "
-                  f"| {'Mail'.center(self.longest_mail)} | {'Numéro'.center(self.longest_number)} "
-                  f"|\n{self._display_plain_line()}\n")
-        return f"{header}{self._all_contacts_in_db_and_strings()}{self._display_plain_line()}"
-
-    def _all_contacts_in_db_and_strings(self) -> str:
-        conn = sqlite3.connect("contacts.db")
-        cursor = conn.cursor()
-        cursor.execute("CREATE TABLE Contacts (NomPrénom TEXT, Mail TEXT, Numéro TEXT)")
-        str_contacts = ""
-        for contact in self.all_contacts:
-            cursor.execute("INSERT INTO Contacts (NomPrénom, Mail, Numéro) VALUES (?, ?, ?)", contact)
-            str_contacts += (f"| {contact[0]}{' ' * (self.longest_name - len(contact[0]))} "
-                             f"| {contact[1]}{' ' * (self.longest_mail - len(contact[1]))} "
-                             f"| {contact[2]}{' ' * (self.longest_number - len(contact[2]))} |\n")
-        conn.commit()
-        conn.close()
-        return str_contacts
-
-    def _extract_names_and_mails(self) -> tuple[list[str], list[str]]:
-        names, mails = [], []
-        for word in self.text_split:
-            if word in self.mr_and_mrs:
-                word_index = self.text_split.index(word)
-                names.append(' '.join(self.text_split[word_index + 1:word_index + 3]).rstrip('.').rstrip(','))
-            mails.append(word.rstrip('.').rstrip(',')) if "@" in word else ...
-        return names, mails
-
-    def _extract_phone(self) -> list[str]:
-        list_numbers = findall(r'\d', self.text)
-        list_numbers_phone, index = [], 0
-        while index < len(list_numbers):
-            term_index = 11 if list_numbers[index] == "3" else 10
-            list_numbers_phone.append(self._format_phone_number("".join(list_numbers[index:index + term_index])))
-            index += term_index
-        return list_numbers_phone
-
-    def _longest(self, index: int) -> int:
-        return len(max([self.all_contacts[i][index] for i in range(len(self.all_contacts))], key=len))
-
-    def _display_plain_line(self) -> str:
-        return f"|{'-' * (self.longest_name + 2)}|{'-' * (self.longest_mail + 2)}|{'-' * (self.longest_number + 2)}|"
+    @staticmethod
+    def _extract_txt(file) -> str:
+        """Extraction du contenu du fichier texte sous forme de chaîne de caractères"""
+        with open(file, "r", encoding="utf-8") as textfile:
+            return textfile.read()
 
     @staticmethod
     def _format_phone_number(number: str) -> str:
-        return f"{number[0:2]}.{number[2]}." + ".".join([number[i:i+2] for i in range(3, len(number), 2)]) \
-            if len(number) == 11 else ".".join([number[i:i+2] for i in range(0, len(number), 2)])
+        """Formatage selon que le numéro de téléphone comporte 11 ou 10 chiffres."""
+        match number[0]:
+            case ExtractContacts.CODE_ZERO:  # 10 chiffres : 0x.xx.xx.xx.xx (usage en national)
+                return ".".join(number[i:i + 2] for i in range(0, len(number), 2))
+            case _:  # 11 chiffres: xx.x.xx.xx.xx.xx (usage en international)
+                return f"{number[0:2]}.{number[2]}." + ".".join(number[i:i + 2] for i in range(3, len(number), 2))
+
+    @staticmethod
+    def _extract_all_datas(text: str) -> dict:
+        """Extraction des données : listes de nom, de mails, de numéros de téléphone dans un dictionnaire."""
+        bdd = {key: [] for key in ExtractContacts.DB_KEYS}
+        for index, word in enumerate(text.split()):
+            if word in ExtractContacts.MR_AND_MRS:  # Pour les noms
+                bdd[ExtractContacts.DB_KEYS[0]].append(' '.join(text.split()[index + 1:index + 3])[:-1])
+            elif "@" in word:  # Pour les mails
+                bdd[ExtractContacts.DB_KEYS[1]].append(word.rstrip('.').rstrip(','))
+        # Pour les numéros de téléphone :
+        list_numbers = [n for n in text if n.isdigit()]
+        while list_numbers:
+            term_index = 10 if list_numbers[0] == ExtractContacts.CODE_ZERO else 11
+            bdd[ExtractContacts.DB_KEYS[2]].append(
+                ExtractContacts._format_phone_number("".join(list_numbers[:term_index])))
+            list_numbers = list_numbers[term_index:]
+        return bdd
+
+    def __str__(self):
+        longest = [len(max(c, key=len))+2 for c in self._all_contacts.values()]
+        # Création des diverses 'strings' nécessaires à la construction du tableau de données :
+        line_str = "\n|" + "".join(f"{'-' * long}|" for long in longest)
+        header = "\n|" + "".join(f"{key_db:^{long}}|" for key_db, long in zip(ExtractContacts.DB_KEYS, longest))
+        contacts = "\n|" + "\n|".join("".join(f" {contact:<{long-1}}|" for contact, long in zip(infos, longest))
+                                      for infos in zip(*self._all_contacts.values()))
+        # Tableau complet avec les données :
+        return "".join(t + line_str for t in [header, contacts])
 
 
 if __name__ == '__main__':
-    print(ExtractContacts(TEXT))
+    print(ExtractContacts("text.txt"))
