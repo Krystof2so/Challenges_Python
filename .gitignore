@@ -3,4 +3,7 @@ bin
 .idea
 lib
 pyvenv.cfg
-
+.aux
+.log
+.out
+.synctex.gz
