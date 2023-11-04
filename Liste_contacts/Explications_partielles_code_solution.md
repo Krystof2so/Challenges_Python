@@ -38,3 +38,109 @@ Pour finir l'extraction des **numéros de téléphone** se fait via cette *regex
 ```r'[+0]\d+'```
 - on cherche le signe "+" ou le chiffre "0" [+0]
 - suivi de plusieurs chiffres `\d+`
+
+### Affichage
+Là, c'est une grosse partie et je voudrais pour cela vous présenter, dans un but pédagogique, un peu les décorateurs qui ont leur importance en Python
+
+L'affiche est géré par la fonction `show(bdd: dict)-> None` qui fait appel à 3 autres fonctions, chacune décorée de `@printl` :
+```py
+def printl(func):
+    def wrapper(*args):
+        result = func(*args)
+        print("|" + result)
+        return result
+    return wrapper
+
+...
+
+@printl
+def t_title(*args):
+    return "".join(f'{t:^{length}}|' for t, length in zip(TITLE, args[0]))
+
+@printl
+def t_sep_line(*args):
+    return "".join(f'{"-"*length}|' for length in args[0])
+
+@printl
+def t_content(*args):
+    return "\n|".join("".join(f" {el:<{length-1}}|" for el, length in zip(el_, args[0])) for el_ in zip(*args[1].values()))
+
+def show(bdd: dict)-> None:
+    length = [len(max(bdd, key = len))+2 for bdd in bdd.values()]
+
+    for text_function in [t_title, t_content]:
+        text_function(length, bdd)
+        t_sep_line(length)
+```
+En termes simples, un décorateur permet d'encapsuler une fonction, qu'il prend en paramètre, pour intégrer d'autres actions autour d'elle.
+```py
+def printl(func):
+    def wrapper(*args):
+        result = func(*args)
+        print("|" + result)
+        return result
+    return wrapper
+```
+Ici, je fais simplement un `print("|" + result)`, cela me permet de simplifier la fonction ` show()` et les formatages des contenus du tableau
+
+`*args` permet de récupérer les arguments de la fonction et si besoin de les utiliser dans le décorateur.
+Ici j'affiche simplement ce que me renvoi les fonctions en ajoutant un` "|"` au tout début
+
+On utilise les décorateur 1 ligne au-dessus des fonctions, Python s'occupe du reste 😉
+```py
+@printl
+def t_title(*args):
+    return "".join(f'{t:^{length}}|' for t, length in zip(TITLE, args[0]))
+```
+l'appel de cette fonction fait donc simplement cela :
+```py
+print("|" + "".join(f'{t:^{length}}|' for t, length in zip(TITLE, args[0])))
+```
+Ce serait donc équivalent à cela sans le décorateur :
+```py
+def t_title(length:list)-> None:
+    print("|" + "".join(f'{t:^{l}}|' for t, l in zip(TITLE, length)))
+```
+Au passage, cette fonction réunie les titres avec la taille des colonnes grâce à la fonction `zip()` puis on centre le tout avec les fonctions de formatage de `fstring` ->  ` :^` (pour centrer)
+
+Pour plus d'info, voici un lien pour mieux appréhender fstring : https://discord.com/channels/396825382009044994/1155460501409628230
+
+La deuxième fonction pour les lignes de séparation fonctionne de la même façon :
+```py
+@printl
+def t_sep_line(*args):
+    return "".join(f'{"-"*length}|' for length in args[0])
+```
+On affiche des `"-"` en fonction de la taille des colonnes
+
+Pour finir le contenu du tableau se faire par l'intermédiaire de 2 boucles et pour le coup 2x `zip()` (oui j'aime beaucoup les zip 😉 ) :
+```py
+@printl
+def t_content(*args):
+    return "\n|".join("".join(f" {el:<{length-1}}|" for el, length in zip(el_, args[0])) for el_ in zip(*args[1].values()))
+```
+- La première boucle :` for el_ in zip(*args[1].values())` permet de lire chaque ligne du contenu du tableau
+- la deuxième, permet, comme dans la fonction des titres, de créer un tuple pour associer les tailles de colonnes du tableau
+- Le formatage permet d'aligner à gauche : `:<` et ajoute des espaces pour bien formater les données dans les cases
+
+Pour revenir à la fonction show() :
+```py
+def show(bdd: dict)-> None:
+    length = [len(max(bdd, key = len))+2 for bdd in bdd.values()]
+
+    for text_function in [t_title, t_content]:
+        text_function(length, bdd)
+        t_sep_line(length)
+```
+La taille de chaque colonne est calculé par l'intermédiaire de `max(..., key = len)` qui est très pratique pour éviter de faire encore des boucles, ainsi l'élément de la liste de taille la plus longue est alors directement renvoyée, et c'est la fonction `len()` qui permet de récupérer la taille en question.
+`length `est donc une liste contenant la taille de chaque colonne du tableau.
+
+Cette dernière fonctionnalité est un peu bonus pour éviter les répétition de la ligne séparatrice du tableau :
+```py
+    for text_function in [t_title, t_content]:
+        text_function(length, bdd)
+        t_sep_line(length)
+```
+J'itère donc sur les deux types d'éléments à ajouter dans le tableau : `t_title `et `t_content`, qui sont appelés avec les arguments `length `et `bdd`.
+
+Puis après chaque type d'élément du tableau, une ligne séparatrice est ajoutée : `t_line`()
